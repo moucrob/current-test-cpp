@@ -3,6 +3,10 @@
 #include <stdio.h>
 /* https://stackoverflow.com/questions/14834267/reading-a-text-file-backwards-in-c */
 
+//to truncate
+#include <unistd.h>
+#include <sys/types.h>
+
 /* File must be open with 'b' (for binary) in the mode parameter to fopen() */
 long fsize(FILE* binaryStream) //2 million lines maximum
 {
@@ -125,6 +129,7 @@ int main(int argc, char* argv[])
 {
   FILE* f;
   long sz;
+  off_t offset = 20;
 
   if (argc < 2)
   {
@@ -146,8 +151,12 @@ int main(int argc, char* argv[])
   {
     char buf[256]; //LENGTH MAX OF A LINE I GUESS
     fseek(f, sz, SEEK_SET); //place the cursor after the last char of the last line
+    unsigned int count(0);
     while (fgetsr(buf, sizeof(buf), f) != NULL)
     {
+      ++count;
+      if ((count == 1) && (truncate(argv[1], offset) == 0));
+        printf("Truncature done\n");
       printf("%s", buf);
       printf("sizeof(buf) = %ld\n", sizeof(buf));
     }
