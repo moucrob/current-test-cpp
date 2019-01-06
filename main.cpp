@@ -6,6 +6,7 @@
 //to truncate
 #include <unistd.h>
 #include <sys/types.h>
+/* https://stackoverflow.com/questions/873454/how-to-truncate-a-file-in-c/873653#873653 */
 
 /* File must be open with 'b' (for binary) in the mode parameter to fopen() */
 long fsize(FILE* binaryStream) //2 million lines maximum
@@ -44,8 +45,8 @@ long fsize(FILE* binaryStream) //2 million lines maximum
 
 /* File must be open with 'b' in the mode parameter to fopen() */
 /* Set file position to size of file before reading last line of file */
-char* fgetsr(char* buf, int n, FILE* binaryStream)
-{
+char* getOffsetBeforeLastBuf(char* buf, int n, FILE* binaryStream, off_t offset)
+{ /* and returns the last buf after this position setting, as well as initiates/modifies the value of that position setting = offset */
   long fpos;
   int cpos;
 
@@ -122,6 +123,10 @@ char* fgetsr(char* buf, int n, FILE* binaryStream)
   //exploration
   printf("n-cpos = %d\n", n-cpos);
 
+  offset = n-cpos;
+  //exploration
+  printf("localoffset = %d\n", offset);
+
   return buf;
 }
 
@@ -129,7 +134,7 @@ int main(int argc, char* argv[])
 {
   FILE* f;
   long sz;
-  off_t offset = 20;
+  off_t localoffset, globaloffset;
 
   if (argc < 2)
   {
@@ -144,18 +149,19 @@ int main(int argc, char* argv[])
   }
 
   sz = fsize(f);
-
-  //printf("file size: %ld\n", sz);
+  printf("file size: %ld\n", sz);
 
   if (sz > 0)
   {
     char buf[256]; //LENGTH MAX OF A LINE I GUESS
     fseek(f, sz, SEEK_SET); //place the cursor after the last char of the last line
     unsigned int count(0);
-    while (fgetsr(buf, sizeof(buf), f) != NULL)
+    while (getOffsetBeforeLastBuf(buf, sizeof(buf), f, localoffset) != NULL)
     {
       ++count;
-      if ((count == 1) && (truncate(argv[1], offset) == 0));
+      printf("localoffset = %ld\n", localoffset);
+      if ((count == 1) && (truncate(argv[1], (globaloffset = sz - localoffset)) == 0));
+        printf("globaloffset = %ld\n", globaloffset);
         printf("Truncature done\n");
       printf("%s", buf);
       printf("sizeof(buf) = %ld\n", sizeof(buf));
