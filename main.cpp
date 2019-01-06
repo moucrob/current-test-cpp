@@ -45,7 +45,7 @@ long fsize(FILE* binaryStream) //2 million lines maximum
 
 /* File must be open with 'b' in the mode parameter to fopen() */
 /* Set file position to size of file before reading last line of file */
-char* getOffsetBeforeLastBuf(char* buf, int n, FILE* binaryStream, off_t offset)
+char* getOffsetBeforeLastBuf(char* buf, int n, FILE* binaryStream, unsigned int& offset)
 { /* and returns the last buf after this position setting, as well as initiates/modifies the value of that position setting = offset */
   long fpos;
   int cpos;
@@ -134,7 +134,8 @@ int main(int argc, char* argv[])
 {
   FILE* f;
   long sz;
-  off_t localoffset, globaloffset;
+  unsigned int localoffset;
+  off_t globaloffset;
 
   if (argc < 2)
   {
@@ -159,8 +160,8 @@ int main(int argc, char* argv[])
     while (getOffsetBeforeLastBuf(buf, sizeof(buf), f, localoffset) != NULL)
     {
       ++count;
-      printf("localoffset = %ld\n", localoffset);
       if ((count == 1) && (truncate(argv[1], (globaloffset = sz - localoffset)) == 0));
+        printf("localoffset = %d\n", localoffset);
         printf("globaloffset = %ld\n", globaloffset);
         printf("Truncature done\n");
       printf("%s", buf);
