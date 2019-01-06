@@ -104,11 +104,44 @@ char* getOffsetBeforeLastBuf(char* buf, int n, FILE* binaryStream, off_t& offset
   return buf;
 }
 
+void deleteLastLine(char* filePathPtr, unsigned int bufLengthMax)
+{
+  off_t globaloffset, localoffset;
+  FILE* f;
+  if ((f = fopen(filePathPtr, "rb")) == NULL)
+  {
+    printf("failed to open file \'%s\'\n", filePathPtr);
+    return;
+  }
+
+  long sz = fsize(f);
+  if (sz > 0)
+  {
+    char buf[bufLengthMax]; //LENGTH MAX OF A LINE I GUESS
+    fseek(f, sz, SEEK_SET); //place the cursor after the last char of the last line
+    if ( getOffsetBeforeLastBuf(buf, sizeof(buf), f, localoffset) != NULL )
+    {
+      if (truncate( filePathPtr, (globaloffset = sz - localoffset) ) != 0);
+      {
+        //printf("Deletion of the exceeding countdown measure writing went wrong!\n");
+        /* One mystery that remains is that it does go wrong and prints this above commented print, even though it does the job...*/
+      }
+
+      //printf("%s", buf);
+    }
+    else
+    {
+      printf("Retrieved a last line of null buffer length!\n");
+    }
+  }
+
+  //TODO : check if I must close it here or not necessarily
+  fclose(f);
+}
+
 int main(int argc, char* argv[])
 {
-  FILE* f;
-  long sz;
-  off_t globaloffset, localoffset;
+  unsigned int bufLengthMax = 256;
 
   if (argc < 2)
   {
@@ -116,27 +149,6 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  if ((f = fopen(argv[1], "rb")) == NULL)
-  {
-    printf("failed to open file \'%s\'\n", argv[1]);
-    return -1;
-  }
-
-  sz = fsize(f);
-  if (sz > 0)
-  {
-    char buf[256]; //LENGTH MAX OF A LINE I GUESS
-    fseek(f, sz, SEEK_SET); //place the cursor after the last char of the last line
-    unsigned int count(0);
-    while (getOffsetBeforeLastBuf(buf, sizeof(buf), f, localoffset) != NULL)
-    {
-      ++count;
-      if ((count == 1) && (truncate(argv[1], (globaloffset = sz - localoffset)) != 0));
-        printf("Deletion of the exceeding countdown measure writing went wrong!\n");
-      printf("%s", buf);
-    }
-  }
-
-  fclose(f);
+  deleteLastLine(argv[1], bufLengthMax);
   return 0;
 }
